@@ -1,6 +1,6 @@
 # 多阶段构建的 Dockerfile
 # 第一阶段：构建应用
-FROM maven:3.9-eclipse-temurin-17-alpine AS builder
+FROM maven:3.9-eclipse-temurin-17 AS builder
 
 # 设置工作目录
 WORKDIR /app
@@ -21,22 +21,19 @@ COPY src src
 RUN mvn clean package -DskipTests
 
 # 第二阶段：运行应用
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre
 
 # 设置工作目录
 WORKDIR /app
 
-# 安装curl用于健康检查
-RUN apk add --no-cache curl
-
 # 创建非root用户
-RUN addgroup -g 1000 appgroup && adduser -u 1000 -G appgroup -s /bin/sh -D appuser
+RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 # 从构建阶段复制jar文件
 COPY --from=builder /app/target/*.jar app.jar
 
 # 修改文件所有者
-RUN chown appuser:appgroup app.jar
+RUN chown appuser:appuser app.jar
 
 # 切换到非root用户
 USER appuser
