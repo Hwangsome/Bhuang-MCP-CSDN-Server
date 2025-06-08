@@ -19,8 +19,9 @@
 *.swo
 *~
 
-# Maven目标目录
+# Maven目标目录（但保留jar文件）
 target/
+!target/*.jar
 
 # 文档文件
 README.md
