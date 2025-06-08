@@ -1,0 +1,37 @@
+# Bhuang MCP CSDN Server - Docker Compose 配置
+# 使用方法:
+#   1. 确保已登录阿里云Registry: docker login --username=黄帅啊 crpi-wzl2k45d0lxbiagj.cn-shenzhen.personal.cr.aliyuncs.com
+#   2. 启动服务: docker-compose up -d
+#   3. 查看日志: docker-compose logs -f
+#   4. 停止服务: docker-compose down
+
+version: '3.8'
+
+services:
+  bhuang-mcp-server:
+    # 使用阿里云Registry中的镜像
+    image: crpi-wzl2k45d0lxbiagj.cn-shenzhen.personal.cr.aliyuncs.com/bhuang-repo/bhuang-mcp-csdn-server:latest
+    container_name: bhuang-mcp-server
+    ports:
+      - "8080:8080"  # 映射端口 宿主机:容器
+    environment:
+      # JVM 内存设置和Spring配置
+      - JAVA_OPTS=-Xms512m -Xmx1024m -Dspring.profiles.active=prod
+      - PARAMS=--server.port=8080
+      - TZ=Asia/Shanghai  # 设置时区为上海
+    restart: unless-stopped  # 容器自动重启策略
+    volumes:
+      - ./logs:/app/logs  # 可选：挂载日志目录到宿主机
+    networks:
+      - bhuang-network
+    # 健康检查 (可选)
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  bhuang-network:
+    driver: bridge 

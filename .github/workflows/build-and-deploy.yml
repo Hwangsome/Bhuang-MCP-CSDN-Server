@@ -66,4 +66,112 @@ jobs:
         echo "✅ 镜像构建并推送成功！"
         echo "📦 镜像标签："
         echo "   - ${{ secrets.ALIBABA_CLOUD_REGISTRY }}/${{ secrets.ALIBABA_CLOUD_NAMESPACE }}/bhuang-mcp-csdn-server:latest"
-        echo "   - ${{ secrets.ALIBABA_CLOUD_REGISTRY }}/${{ secrets.ALIBABA_CLOUD_NAMESPACE }}/bhuang-mcp-csdn-server:${{ steps.version.outputs.image_tag }}" 
+        echo "   - ${{ secrets.ALIBABA_CLOUD_REGISTRY }}/${{ secrets.ALIBABA_CLOUD_NAMESPACE }}/bhuang-mcp-csdn-server:${{ steps.version.outputs.image_tag }}"
+        
+    - name: 📋 使用说明
+      run: |
+        echo ""
+        echo "🚀 ================== 镜像使用指南 =================="
+        echo ""
+        echo "📝 1. 登录阿里云Docker Registry："
+        echo "   docker login --username=黄帅啊 ${{ secrets.ALIBABA_CLOUD_REGISTRY }}"
+        echo ""
+        echo "📦 2. 拉取镜像（选择其一）："
+        echo "   # 拉取最新版本"
+        echo "   docker pull ${{ secrets.ALIBABA_CLOUD_REGISTRY }}/${{ secrets.ALIBABA_CLOUD_NAMESPACE }}/bhuang-mcp-csdn-server:latest"
+        echo ""
+        echo "   # 拉取指定版本"
+        echo "   docker pull ${{ secrets.ALIBABA_CLOUD_REGISTRY }}/${{ secrets.ALIBABA_CLOUD_NAMESPACE }}/bhuang-mcp-csdn-server:${{ steps.version.outputs.image_tag }}"
+        echo ""
+        echo "🏃 3. 运行容器："
+        echo "   # 基本运行"
+        echo "   docker run -d --name bhuang-mcp-server -p 8080:8080 \\"
+        echo "     ${{ secrets.ALIBABA_CLOUD_REGISTRY }}/${{ secrets.ALIBABA_CLOUD_NAMESPACE }}/bhuang-mcp-csdn-server:latest"
+        echo ""
+        echo "   # 带环境变量运行"
+        echo "   docker run -d --name bhuang-mcp-server -p 8080:8080 \\"
+        echo "     -e JAVA_OPTS=\"-Xms512m -Xmx1024m\" \\"
+        echo "     -e TZ=\"Asia/Shanghai\" \\"
+        echo "     --restart unless-stopped \\"
+        echo "     ${{ secrets.ALIBABA_CLOUD_REGISTRY }}/${{ secrets.ALIBABA_CLOUD_NAMESPACE }}/bhuang-mcp-csdn-server:latest"
+        echo ""
+        echo "🐳 4. 使用 Docker Compose："
+        echo "   # 下载 docker-compose.yml 文件"
+        echo "   curl -O https://raw.githubusercontent.com/${{ github.repository }}/master/docker-compose.yml"
+        echo "   # 启动服务"
+        echo "   docker-compose up -d"
+        echo ""
+        echo "📊 5. 监控和维护："
+        echo "   # 查看运行状态"
+        echo "   docker ps"
+        echo "   # 查看日志"
+        echo "   docker logs -f bhuang-mcp-server"
+        echo "   # 健康检查"
+        echo "   curl http://localhost:8080/actuator/health"
+        echo ""
+        echo "🛠️ 6. 一键部署脚本："
+        echo "   # 下载部署脚本"
+        echo "   curl -O https://raw.githubusercontent.com/${{ github.repository }}/master/deploy.sh"
+        echo "   chmod +x deploy.sh"
+        echo "   # 执行部署"
+        echo "   ./deploy.sh"
+        echo ""
+        echo "=================================================="
+        echo "✨ 版本信息："
+        echo "   应用版本: ${{ steps.version.outputs.version }}"
+        echo "   Git提交: ${{ steps.version.outputs.short_sha }}"
+        echo "   镜像标签: ${{ steps.version.outputs.image_tag }}"
+        echo "   构建时间: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+        echo "=================================================="
+        
+    - name: 📝 创建部署总结
+      if: github.event_name == 'push'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const summary = `
+          ## 🚀 部署成功！
+          
+          ### 📦 镜像信息
+          - **最新版本**: \`${{ secrets.ALIBABA_CLOUD_REGISTRY }}/${{ secrets.ALIBABA_CLOUD_NAMESPACE }}/bhuang-mcp-csdn-server:latest\`
+          - **指定版本**: \`${{ secrets.ALIBABA_CLOUD_REGISTRY }}/${{ secrets.ALIBABA_CLOUD_NAMESPACE }}/bhuang-mcp-csdn-server:${{ steps.version.outputs.image_tag }}\`
+          
+          ### 🏃 快速开始
+          
+          #### 方式1: 直接运行
+          \`\`\`bash
+          # 登录
+          docker login --username=黄帅啊 ${{ secrets.ALIBABA_CLOUD_REGISTRY }}
+          
+          # 拉取并运行
+          docker pull ${{ secrets.ALIBABA_CLOUD_REGISTRY }}/${{ secrets.ALIBABA_CLOUD_NAMESPACE }}/bhuang-mcp-csdn-server:latest
+          docker run -d --name bhuang-mcp-server -p 8080:8080 \\
+            -e JAVA_OPTS="-Xms512m -Xmx1024m" \\
+            --restart unless-stopped \\
+            ${{ secrets.ALIBABA_CLOUD_REGISTRY }}/${{ secrets.ALIBABA_CLOUD_NAMESPACE }}/bhuang-mcp-csdn-server:latest
+          \`\`\`
+          
+          #### 方式2: Docker Compose
+          \`\`\`bash
+          curl -O https://raw.githubusercontent.com/${{ github.repository }}/master/docker-compose.yml
+          docker-compose up -d
+          \`\`\`
+          
+          #### 方式3: 一键部署
+          \`\`\`bash
+          curl -O https://raw.githubusercontent.com/${{ github.repository }}/master/deploy.sh
+          chmod +x deploy.sh && ./deploy.sh
+          \`\`\`
+          
+          ### ✨ 版本详情
+          - **应用版本**: ${{ steps.version.outputs.version }}
+          - **Git提交**: ${{ steps.version.outputs.short_sha }}
+          - **构建时间**: ${new Date().toISOString()}
+          
+          ### 📊 应用访问
+          - **访问地址**: http://localhost:8080
+          - **健康检查**: http://localhost:8080/actuator/health
+          - **查看日志**: \`docker logs -f bhuang-mcp-server\`
+          `;
+          
+          await core.summary.addRaw(summary).write(); 
